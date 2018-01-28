@@ -1,4 +1,4 @@
-MOCK_USERS = [{"test@example.com", "123456"}]
+MOCK_USERS = {"test@example.com": "123456"}
 
 class MockDBHelper:
 	def get_user(self, email):
