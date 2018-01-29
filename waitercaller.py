@@ -22,7 +22,7 @@ login_manager = LoginManager(app)
 
 @app.route("/")
 def home():
-	return render_template("home_1.html")
+	return render_template("home.html")
 
 @app.route("/account")
 @login_required
@@ -49,7 +49,7 @@ def load_user(user_id):
 @app.route("/logout")
 def logout():
 	logout_user()
-	return redirect(url_for("home_1"))
+	return redirect(url_for("home"))
 
 @app.route("/dashboard")
 @login_required
