@@ -1,15 +1,18 @@
 from flask_login import LoginManager
 from flask_login import login_required
 from flask_login import login_user
+from flask_login import logout_user
 from flask import Flask
 from flask import render_template
 from mockdbhelper import MockDBHelper as DBHelper
+from passwordhelper import PasswordHelper
 from flask import redirect
 from flask import url_for
 from flask import request
 from user import User
 
 DB = DBHelper()
+PH = PasswordHelper()
 
 
 app = Flask(__name__)
@@ -30,11 +33,11 @@ def account():
 def login():
 	email = request.form.get("email")
 	password = request.form.get("password")
-	user_password = DB.get_user(email)
-	if user_password and user_password == password:
+	stored_user = DB.get_user(email)
+	if stored_user and PH.validate_password(password, stored_user['salt'], stored_user['hashed']):
 		user = User(email)
 		login_user(user)
-		return redirect(url_for('account'))
+		return redirect(url_for("account"))
 	return home()
 
 @login_manager.user_loader
@@ -43,7 +46,10 @@ def load_user(user_id):
 	if user_password:
 		return User(user_id)	
 
-
+@app.route("/logout")
+def logout():
+	logout_user()
+	return redirect(url_for("home"))
 
 if __name__=='__main__':
 	app.run()
