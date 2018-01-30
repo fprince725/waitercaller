@@ -63,7 +63,7 @@ def dashboard():
 @login_required
 def account_createtable():
 	table_name = request.form.get("tablenumber")
-	tableid = DB.add_table(tablename, current_user.get_id())
+	tableid = DB.add_table(table_name, current_user.get_id())
 	new_url = config.base_url + "newrequest/" + tableid
 	DB.update_table(tableid,new_url)
 	return redirect(url_for("account"))

@@ -18,9 +18,9 @@ class MockDBHelper:
   		MOCK_TABLES.append({"_id": number, "number": number, "owner": owner})
   		return number
 
-	def update_table(self, _id, url):
+	def update_table(self, owner_id, url):
   		for table in MOCK_TABLES:
-  			if table.get("_id") == id:
+  			if table.get("_id") == owner_id:
   				table["url"] = url
   				break
 
