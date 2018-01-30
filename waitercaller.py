@@ -2,6 +2,7 @@ from flask_login import LoginManager
 from flask_login import login_required
 from flask_login import login_user
 from flask_login import logout_user
+from flask_login import current_user
 from flask import Flask
 from flask import render_template
 from mockdbhelper import MockDBHelper as DBHelper
@@ -10,6 +11,7 @@ from flask import redirect
 from flask import url_for
 from flask import request
 from user import User
+import config
 
 DB = DBHelper()
 PH = PasswordHelper()
@@ -27,7 +29,8 @@ def home():
 @app.route("/account")
 @login_required
 def account():
-	return render_template("account.html")
+	tables = DB.get_tables(current_user.get_id())
+	return render_template("account.html", tables=tables)
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -55,6 +58,22 @@ def logout():
 @login_required
 def dashboard():
 	return render_template("dashboard.html")
+
+@app.route("/account/createtable", methods=["POST"])
+@login_required
+def account_createtable():
+	table_name = request.form.get("tablenumber")
+	tableid = DB.add_table(tablename, current_user.get_id())
+	new_url = config.base_url + "newrequest/" + tableid
+	DB.update_table(tableid,new_url)
+	return redirect(url_for("account"))
+
+@app.route("/account/deletetable")
+@login_required
+def account_deletetable():
+	table_id = request.args.get("tableid")
+	DB.delete_table(table_id)
+	return redirect(url_for("account"))
 
 if __name__=='__main__':
 	app.run()
