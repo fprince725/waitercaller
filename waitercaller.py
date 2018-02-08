@@ -14,6 +14,8 @@ from flask import request
 from user import User
 import config
 import datetime
+from forms import RegistrationForm
+from forms import LoginForm
 
 DB = DBHelper()
 PH = PasswordHelper()
@@ -27,7 +29,8 @@ login_manager = LoginManager(app)
 
 @app.route("/")
 def home():
-	return render_template("home.html")
+	registrationform = RegistrationForm()
+	return render_template("home.html", registrationform=registrationform, loginform=LoginForm())
 
 @app.route("/account")
 @login_required
@@ -37,13 +40,15 @@ def account():
 
 @app.route("/login", methods=["POST"])
 def login():
-	email = request.form.get("email")
-	password = request.form.get("password")
-	stored_user = DB.get_user(email)
-	if stored_user and PH.validate_password(password, stored_user['salt'], stored_user['hashed']):
-		user = User(email)
-		login_user(user)
-		return redirect(url_for("account"))
+	form = LoginForm(request.form)
+	if form.validate():
+		stored_user = DB.get_user(form.email.data)
+		if stored_user and PH.validate_password(form.password.data, stored_user['salt'], stored_user['hashed']):
+			user = User(form.email.data)
+			login_user(user)
+			return redirect(url_for("account"))
+		form.email.errors.append("Email or password invalid")
+		return render_template("home.html", loginform=form, registrationform=RegistrationForm())
 	return home()
 
 @login_manager.user_loader
@@ -99,6 +104,18 @@ def dashboard_resolve():
 	return redirect(url_for("dashboard"))
 
 
+@app.route("/register", methods=["POST"])
+def register():
+	form = RegistrationForm(request.form)
+	if form.validate():
+		if DB.get_user(form.email.data):
+			form.email.errors.append("Email address already registered")
+			return render_template('home.html', registrationform=form, loginform=LoginForm())
+		salt = PH.get_salt()
+		hashed = PH.get_hash(form.password2.data.encode('utf-8') + salt)
+		DB.add_user(form.email.data, salt, hashed)
+		return render_template("home.html", registrationform=form, loginform=LoginForm(), onloadmessage="Registration successful. Please log in.")
+	return render_template("home.html", registrationform=form, loginform=LoginForm())
 
 if __name__=='__main__':
 	app.run()
