@@ -16,7 +16,8 @@ import config
 import datetime
 from forms import RegistrationForm
 from forms import LoginForm
-
+from forms import CreateTableForm
+from forms import DeleteTableForm
 DB = DBHelper()
 PH = PasswordHelper()
 BH = BitlyHelper()
@@ -36,7 +37,7 @@ def home():
 @login_required
 def account():
 	tables = DB.get_tables(current_user.get_id())
-	return render_template("account.html", tables=tables)
+	return render_template("account.html", tables=tables, createtableform=CreateTableForm())
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -77,12 +78,27 @@ def dashboard():
 @app.route("/account/createtable", methods=["POST"])
 @login_required
 def account_createtable():
-	table_name = request.form.get("tablenumber")
-	tableid = DB.add_table(table_name, current_user.get_id())
-	new_url = config.base_url + "newrequest/" + tableid
-	short_url = BH.shorten_url(new_url)
-	DB.update_table(tableid,short_url)
-	return redirect(url_for("account"))
+	form = CreateTableForm(request.form)
+	if form.validate():
+		tableid = DB.add_table(form.tablenumber.data, current_user.get_id())
+		new_url = config.base_url + "newrequest/" + tableid
+		short_url = BH.shorten_url(new_url)
+		DB.update_table(tableid,short_url)
+		return redirect(url_for("account"))
+	return render_template("account.html", createtableform=form, tables=DB.get_tables(current_user.get_id()))
+
+@app.route("/register", methods=["POST"])
+def register():
+	form = RegistrationForm(request.form)
+	if form.validate():
+		if DB.get_user(form.email.data):
+			form.email.errors.append("Email address already registered")
+			return render_template('home.html', registrationform=form, loginform=LoginForm())
+		salt = PH.get_salt()
+		hashed = PH.get_hash(form.password2.data.encode('utf-8') + salt)
+		DB.add_user(form.email.data, salt, hashed)
+		return render_template("home.html", registrationform=form, loginform=LoginForm(), onloadmessage="Registration successful. Please log in.")
+	return render_template("home.html", registrationform=form, loginform=LoginForm())
 
 @app.route("/account/deletetable")
 @login_required
@@ -103,19 +119,6 @@ def dashboard_resolve():
 	DB.delete_request(request_id)
 	return redirect(url_for("dashboard"))
 
-
-@app.route("/register", methods=["POST"])
-def register():
-	form = RegistrationForm(request.form)
-	if form.validate():
-		if DB.get_user(form.email.data):
-			form.email.errors.append("Email address already registered")
-			return render_template('home.html', registrationform=form, loginform=LoginForm())
-		salt = PH.get_salt()
-		hashed = PH.get_hash(form.password2.data.encode('utf-8') + salt)
-		DB.add_user(form.email.data, salt, hashed)
-		return render_template("home.html", registrationform=form, loginform=LoginForm(), onloadmessage="Registration successful. Please log in.")
-	return render_template("home.html", registrationform=form, loginform=LoginForm())
 
 if __name__=='__main__':
 	app.run()
