@@ -17,7 +17,7 @@ import datetime
 from forms import RegistrationForm
 from forms import LoginForm
 from forms import CreateTableForm
-from forms import DeleteTableForm
+
 DB = DBHelper()
 PH = PasswordHelper()
 BH = BitlyHelper()
