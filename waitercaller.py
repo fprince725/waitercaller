@@ -5,10 +5,6 @@ from flask_login import logout_user
 from flask_login import current_user
 from flask import Flask
 from flask import render_template
-if config.test:
-	from mockdbhelper import MockDBHelper as DBHelper
-else:
-	from dbhelper import DBHelper
 from passwordhelper import PasswordHelper
 from bitlyhelper import BitlyHelper
 from flask import redirect
@@ -16,6 +12,10 @@ from flask import url_for
 from flask import request
 from user import User
 import config
+if config.test:
+	from mockdbhelper import MockDBHelper as DBHelper
+else:
+	from dbhelper import DBHelper
 import datetime
 from forms import RegistrationForm
 from forms import LoginForm
