@@ -5,7 +5,10 @@ from flask_login import logout_user
 from flask_login import current_user
 from flask import Flask
 from flask import render_template
-from mockdbhelper import MockDBHelper as DBHelper
+if config.test:
+	from mockdbhelper import MockDBHelper as DBHelper
+else:
+	from dbhelper import DBHelper
 from passwordhelper import PasswordHelper
 from bitlyhelper import BitlyHelper
 from flask import redirect
@@ -81,7 +84,7 @@ def account_createtable():
 	form = CreateTableForm(request.form)
 	if form.validate():
 		tableid = DB.add_table(form.tablenumber.data, current_user.get_id())
-		new_url = config.base_url + "newrequest/" + tableid
+		new_url = config.base_url + "newrequest/" + str(tableid)
 		short_url = BH.shorten_url(new_url)
 		DB.update_table(tableid,short_url)
 		return redirect(url_for("account"))
